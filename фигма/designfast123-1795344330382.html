@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STYra — креативная AI-студия дизайна</title>
+    <meta name="description" content="STYra — креативная студия: AI-визуалы, карточки для маркетплейсов, рекламные креативы и айдентика.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Manrope:wght@300;400;500;600&display=swap&subset=cyrillic" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        plum: '#30202F',
+                        burgundy: '#711D3D',
+                        ivory: '#F8F3EF',
+                        blush: '#EBD4DC',
+                        rose: '#C77A98',
+                        gold: '#C6A36A',
+                        ink: '#171319'
+                    },
+                    fontFamily: {
+                        serif: ['"Cormorant Garamond"', 'Georgia', 'serif'],
+                        sans: ['Manrope', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --plum: #30202F; --burgundy: #711D3D; --ivory: #F8F3EF;
+            --blush: #EBD4DC; --rose: #C77A98; --gold: #C6A36A; --ink: #171319;
+        }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Manrope', sans-serif; background: var(--ivory); color: var(--ink); -webkit-font-smoothing: antialiased; }
+        .font-display { font-family: 'Cormorant Garamond', serif; }
+        ::selection { background: var(--burgundy); color: var(--ivory); }
+
+        /* grain overlay */
+        .grain::after {
+            content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .07; mix-blend-mode: multiply;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+        }
+
+        /* hero staged reveal */
+        @keyframes rise { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: none; } }
+        @keyframes unveil { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0 0 0 0); } }
+        @keyframes spin-slow { to { transform: rotate(360deg); } }
+        @keyframes twinkle { 0%,100% { opacity: .35; transform: scale(.8) rotate(0); } 50% { opacity: 1; transform: scale(1.1) rotate(45deg); } }
+        @keyframes marquee { to { transform: translateX(-50%); } }
+        .rise { opacity: 0; animation: rise 1s cubic-bezier(.2,.7,.2,1) forwards; }
+        .d1 { animation-delay: .1s; } .d2 { animation-delay: .3s; } .d3 { animation-delay: .5s; }
+        .d4 { animation-delay: .7s; } .d5 { animation-delay: .9s; }
+        .unveil { animation: unveil 1.4s cubic-bezier(.6,.05,.2,1) .2s both; }
+        .spin-slow { animation: spin-slow 40s linear infinite; }
+        .twinkle { animation: twinkle 4s ease-in-out infinite; }
+        .marquee-track { animation: marquee 40s linear infinite; width: max-content; }
+
+        /* scroll reveal */
+        .reveal { opacity: 0; transform: translateY(32px); transition: opacity .9s ease, transform .9s cubic-bezier(.2,.7,.2,1); }
+        .reveal.in { opacity: 1; transform: none; }
+
+        /* image hover */
+        .zoom img { transition: transform 1.2s cubic-bezier(.2,.7,.2,1); }
+        .zoom:hover img { transform: scale(1.06); }
+
+        /* link underline */
+        .ulink { background-image: linear-gradient(var(--gold), var(--gold)); background-size: 0 1px; background-repeat: no-repeat; background-position: 0 100%; transition: background-size .5s; }
+        .ulink:hover { background-size: 100% 1px; }
+
+        /* form */
+        .field { background: transparent; border: 0; border-bottom: 1px solid rgba(248,243,239,.3); color: var(--ivory); padding: .9rem 0; width: 100%; outline: none; transition: border-color .3s; font-size: .95rem; }
+        .field::placeholder { color: rgba(248,243,239,.45); }
+        .field:focus { border-color: var(--gold); }
+        select.field option { color: var(--ink); }
+
+        /* filter tabs */
+        .tab { position: relative; padding: .5rem 0; color: rgba(23,19,25,.55); transition: color .3s; }
+        .tab::after { content: ""; position: absolute; left: 0; bottom: 0; height: 1px; width: 100%; background: var(--burgundy); transform: scaleX(0); transform-origin: left; transition: transform .4s; }
+        .tab:hover, .tab.active { color: var(--burgundy); }
+        .tab.active::after { transform: scaleX(1); }
+
+        /* modal */
+        #modal { opacity: 0; pointer-events: none; transition: opacity .4s; }
+        #modal.open { opacity: 1; pointer-events: auto; }
+        #modal .sheet { transform: translateY(40px); transition: transform .6s cubic-bezier(.2,.7,.2,1); }
+        #modal.open .sheet { transform: none; }
+        .card-in { animation: rise .7s ease both; }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation: none !important; transition: none !important; }
+            .rise, .reveal { opacity: 1; transform: none; }
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+<!-- SVG symbol: four-point star (decorative accents only; the logo itself is the uploaded image) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+        <symbol id="star" viewBox="0 0 24 24"><path d="M12 0C12.8 8 16 11.2 24 12 16 12.8 12.8 16 12 24 11.2 16 8 12.8 0 12 8 11.2 11.2 8 12 0Z" fill="currentColor"/></symbol>
+    </defs>
+</svg>
+
+<!-- Header -->
+<header name="site-header" class="sticky top-0 z-40 bg-plum text-ivory border-b border-gold/20">
+    <div class="max-w-7xl mx-auto px-5 lg:px-10 h-20 flex items-center justify-between">
+        <a href="#home" name="logo-link" class="flex items-center gap-4" aria-label="STYra — на главную">
+            <div class="w-14 h-14 overflow-hidden border border-gold/50 shrink-0">
+                <img src="логотип.jpg" alt="Логотип STYra" class="w-full h-full object-cover">
+            </div>
+            <span class="hidden sm:block text-[10px] tracking-[.32em] uppercase text-ivory/60 leading-relaxed">Creative<br>AI Studio</span>
+        </a>
+        <nav name="main-navigation" class="hidden lg:flex items-center gap-10 text-[13px] tracking-[.14em] uppercase">
+            <a href="#home" class="ulink py-1">Главная</a>
+            <a href="#services" class="ulink py-1">Услуги</a>
+            <a href="#portfolio" class="ulink py-1">Портфолио</a>
+            <a href="#about" class="ulink py-1">Обо мне</a>
+            <a href="#contact" class="ulink py-1">Контакты</a>
+        </nav>
+        <div class="flex items-center gap-4">
+            <a href="#contact" name="header-cta" class="hidden md:inline-block bg-burgundy hover:bg-[#8a2549] text-ivory text-[12px] tracking-[.16em] uppercase px-7 py-3.5 border border-gold/30 transition-colors">Обсудить проект</a>
+            <button id="burger" class="lg:hidden w-11 h-11 flex flex-col items-center justify-center gap-1.5" aria-label="Открыть меню">
+                <span class="w-6 h-px bg-ivory"></span><span class="w-6 h-px bg-ivory"></span><span class="w-4 h-px bg-gold"></span>
+            </button>
+        </div>
+    </div>
+    <div id="mobile-menu" class="hidden lg:hidden bg-plum border-t border-gold/20 px-5 pb-8 pt-4">
+        <nav class="flex flex-col text-sm tracking-[.14em] uppercase">
+            <a href="#home" class="mm py-4 border-b border-ivory/10">Главная</a>
+            <a href="#services" class="mm py-4 border-b border-ivory/10">Услуги</a>
+            <a href="#portfolio" class="mm py-4 border-b border-ivory/10">Портфолио</a>
+            <a href="#about" class="mm py-4 border-b border-ivory/10">Обо мне</a>
+            <a href="#contact" class="mm py-4 border-b border-ivory/10">Контакты</a>
+        </nav>
+        <a href="#contact" class="mm mt-6 block text-center bg-burgundy text-ivory text-xs tracking-[.16em] uppercase py-4">Обсудить проект</a>
+    </div>
+</header>
+
+<main>
+
+<!-- Hero Section -->
+<section id="home" name="hero-section" class="relative overflow-hidden grain bg-ivory">
+    <div class="absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full opacity-60" style="background: radial-gradient(circle, #EBD4DC 0%, rgba(235,212,220,0) 70%)"></div>
+    <div class="relative max-w-7xl mx-auto px-5 lg:px-10 pt-14 pb-24 lg:pt-20 lg:pb-32 grid lg:grid-cols-12 gap-12 items-center">
+
+        <div name="hero-copy" class="lg:col-span-7 relative z-10">
+            <div class="rise d1 flex items-center gap-4 mb-8">
+                <svg class="w-4 h-4 text-gold twinkle"><use href="#star"/></svg>
+                <span class="text-[11px] tracking-[.36em] uppercase text-burgundy">Креативная AI-студия · STYra</span>
+            </div>
+            <h1 class="rise d2 font-display font-medium text-[clamp(3rem,7.4vw,6.6rem)] leading-[.95] text-plum">
+                Превращаю идеи в <em class="font-normal text-burgundy">визуальную эстетику</em>
+            </h1>
+            <div class="rise d3 mt-10 flex gap-6 max-w-xl">
+                <div class="w-px bg-gold/60 shrink-0"></div>
+                <p class="text-[15px] md:text-base leading-relaxed text-ink/75">Создаю визуальный контент, рекламные материалы и дизайн с помощью современных AI-инструментов. Объединяю технологии, воображение и чувство стиля.</p>
+            </div>
+            <div class="rise d4 mt-11 flex flex-col sm:flex-row gap-4">
+                <a href="#portfolio" name="hero-primary-cta" class="group inline-flex items-center justify-center gap-3 bg-burgundy text-ivory text-[12px] tracking-[.16em] uppercase px-9 py-5 hover:bg-plum transition-colors">
+                    Посмотреть портфолио
+                    <span class="transition-transform group-hover:translate-x-1">→</span>
+                </a>
+                <a href="#contact" name="hero-secondary-cta" class="inline-flex items-center justify-center text-[12px] tracking-[.16em] uppercase px-9 py-5 border border-plum/40 text-plum hover:border-burgundy hover:text-burgundy transition-colors">Обсудить проект</a>
+            </div>
+            <dl class="rise d5 mt-16 grid grid-cols-3 max-w-lg gap-6 border-t border-gold/40 pt-6">
+                <div><dt class="font-display text-4xl text-burgundy">20+</dt><dd class="text-[11px] tracking-[.14em] uppercase text-ink/55 mt-1">проектов</dd></div>
+                <div><dt class="font-display text-4xl text-burgundy">5</dt><dd class="text-[11px] tracking-[.14em] uppercase text-ink/55 mt-1">направлений</dd></div>
+                <div><dt class="font-display text-4xl text-burgundy">48ч</dt><dd class="text-[11px] tracking-[.14em] uppercase text-ink/55 mt-1">первый концепт</dd></div>
+            </dl>
+        </div>
+
+        <div name="hero-visual" class="lg:col-span-5 relative">
+            <!-- Replace hero image with your own work -->
+            <div class="relative ml-auto w-[88%] lg:w-full">
+                <div class="unveil relative aspect-[3/4] overflow-hidden bg-blush">
+                    <img src="вверхногами1.jpg" alt="Редакционный AI-портрет в бордовом шёлке" class="w-full h-full object-cover">
+                    <div class="absolute inset-0 bg-gradient-to-t from-plum/50 via-transparent to-transparent"></div>
+                    <p class="absolute bottom-5 left-5 text-ivory text-[10px] tracking-[.3em] uppercase">AI Photography · 2026</p>
+                </div>
+                <div class="absolute -inset-3 border border-gold/50 -z-0 translate-x-4 translate-y-4 pointer-events-none"></div>
+            </div>
+            <!-- logo card -->
+            <div class="rise d5 absolute -bottom-10 -left-2 sm:-left-10 w-36 sm:w-48 border border-gold/60 bg-plum p-1.5 z-10">
+                <div class="aspect-square overflow-hidden">
+                    <img src="логотип.jpg" alt="Фирменный знак STYra" class="w-full h-full object-cover">
+                </div>
+            </div>
+            <svg class="absolute -top-8 right-0 w-14 h-14 text-gold spin-slow" aria-hidden="true"><use href="#star"/></svg>
+            <svg class="absolute top-1/3 -left-6 w-5 h-5 text-rose twinkle" style="animation-delay:1.5s" aria-hidden="true"><use href="#star"/></svg>
+            <p class="hidden xl:block absolute top-1/2 -right-10 origin-center rotate-90 text-[10px] tracking-[.5em] uppercase text-plum/50 whitespace-nowrap">Magic · Beauty · Wisdom</p>
+        </div>
+    </div>
+</section>
+
+<!-- Marquee Strip -->
+<section name="marquee-strip" class="bg-plum text-ivory overflow-hidden py-5 border-y border-gold/30" aria-hidden="true">
+    <div class="marquee-track flex items-center gap-10 font-display italic text-2xl md:text-3xl">
+        <span>AI-фотография</span><svg class="w-4 h-4 text-gold"><use href="#star"/></svg>
+        <span>Карточки для маркетплейсов</span><svg class="w-4 h-4 text-gold"><use href="#star"/></svg>
+        <span>Рекламные креативы</span><svg class="w-4 h-4 text-gold"><use href="#star"/></svg>
+        <span>Создание сайтов Портфолио и Визитки </span><svg class="w-4 h-4 text-gold"><use href="#star"/></svg>
+        <span>Оформление профилей соцсетей</span><svg class="w-4 h-4 text-gold"><use href="#star"/></svg>
+        <span>Написание продающих текстов и постов</span><svg class="w-4 h-4 text-gold"><use href="#star"/></svg>
+        <span>Создание логотипов и брендбука</span><svg class="w-4 h-4 text-gold"><use href="#star"/></svg>
+        <span>Создание мультфильмов</span><svg class="w-4 h-4 text-gold"><use href="#star"/></svg>
+        <span>Айдентика</span><svg class="w-4 h-4 text-gold"><use href="#star"/></svg>
+        <span>Креативные концепции</span><svg class="w-4 h-4 text-gold"><use href="#star"/></svg>
+    </div>
+</section>
+
+<!-- Services -->
+<section id="services" name="services-section" class="relative bg-ivory py-24 lg:py-36">
+    <div class="max-w-7xl mx-auto px-5 lg:px-10">
+        <div class="grid lg:grid-cols-12 gap-8 mb-16 lg:mb-24 items-end">
+            <div class="lg:col-span-7 reveal">
+                <p class="text-[11px] tracking-[.36em] uppercase text-burgundy mb-6 flex items-center gap-3"><span class="w-10 h-px bg-gold"></span>Услуги</p>
+                <h2 class="font-display text-5xl md:text-7xl text-plum leading-[.98]">Всё, что нужно, чтобы <em class="text-burgundy">вас запомнили</em></h2>
+            </div>
+            <p class="lg:col-span-4 lg:col-start-9 reveal text-ink/70 leading-relaxed">Ряд направлений, в каждом — собственный взгляд, вкус и выверенная работа с AI. От одного визуала до целой системы. AI-фотография, карточки для маркетплейсов, рекламные креативы, создание сайтов-этот сайт сделан самостоятельно, оформление профилей соцсетей, написание продающих текстов и постов, создание логотипов и брендбука, создание мультфильмов, айдентика, креативные концепции.</p>
+        </div>
+
+        <div class="grid grid-cols-12 gap-x-8 gap-y-16">
+            <!-- Service 1 -->
+            <article name="service-ai-visuals" class="reveal col-span-12 md:col-span-7 group">
+                <div class="zoom overflow-hidden h-80 md:h-[440px] bg-blush relative">
+                    <img src="цветы.jpg" alt="AI-генерация изображений" class="w-full h-full object-cover">
+                    <span class="absolute top-5 left-5 font-display text-5xl text-ivory/90">01</span>
+                </div>
+                <div class="pt-7 flex flex-col md:flex-row md:items-start md:justify-between gap-5">
+                    <div class="max-w-md">
+                        <h3 class="font-display text-3xl md:text-4xl text-plum">AI-генерация изображений и визуального контента</h3>
+                        <p class="text-ink/70 mt-3 leading-relaxed text-[15px]">Фотореалистичные образы, лукбуки и контент для соцсетей в единой эстетике вашего бренда.</p>
+                    </div>
+                    <a href="#contact" class="ulink shrink-0 text-[12px] tracking-[.16em] uppercase text-burgundy pb-1 self-start md:mt-3">Заказать →</a>
+                </div>
+            </article>
+            <!-- Service 2 -->
+            <article name="service-marketplace" class="reveal col-span-12 md:col-span-5 md:mt-28 group">
+                <div class="zoom overflow-hidden h-80 md:h-[360px] bg-blush relative">
+                    <img src="f641725b-a793-4f73-b323-f112010e2dc9.png" alt="Карточки товаров для маркетплейсов" class="w-full h-full object-cover">
+                    <span class="absolute top-5 left-5 font-display text-5xl text-ivory/90">02</span>
+                </div>
+                <div class="pt-7">
+                    <h3 class="font-display text-3xl md:text-4xl text-plum">Карточки товаров и инфографика для маркетплейсов</h3>
+                    <p class="text-ink/70 mt-3 leading-relaxed text-[15px]">Продающие слайды, которые выделяют товар в ленте и повышают конверсию.</p>
+                    <a href="#contact" class="ulink inline-block mt-5 text-[12px] tracking-[.16em] uppercase text-burgundy pb-1">Заказать →</a>
+                </div>
+            </article>
+            <!-- Service 3 -->
+            <article name="service-advertising" class="reveal col-span-12 md:col-span-4 group">
+                <div class="zoom overflow-hidden h-72 bg-blush relative">
+                    <img src="dyhipramoygolnye.png" alt="Рекламные креативы" class="w-full h-full object-cover">
+                    <span class="absolute top-5 left-5 font-display text-5xl text-ivory/90">03</span>
+                </div>
+                <div class="pt-7">
+                    <h3 class="font-display text-3xl text-plum">Рекламные креативы и промо-визуалы</h3>
+                    <p class="text-ink/70 mt-3 leading-relaxed text-[15px]">Баннеры и кампании, в которых идея считывается за секунду.</p>
+                    <a href="#contact" class="ulink inline-block mt-5 text-[12px] tracking-[.16em] uppercase text-burgundy pb-1">Заказать →</a>
+                </div>
+            </article>
+            <!-- Service 4 -->
+            <article name="service-branding" class="reveal col-span-12 md:col-span-4 md:mt-14 group">
+                <div class="zoom overflow-hidden h-72 bg-blush relative">
+                    <img src="Овальная вывеска STYra у кофейни.png" alt="Брендинг и айдентика" class="w-full h-full object-cover">
+                    <span class="absolute top-5 left-5 font-display text-5xl text-ivory/90">04</span>
+                </div>
+                <div class="pt-7">
+                    <h3 class="font-display text-3xl text-plum">Брендинг и визуальная идентичность</h3>
+                    <p class="text-ink/70 mt-3 leading-relaxed text-[15px]">Палитра, типографика, знак и правила их жизни в одной системе.</p>
+                    <a href="#contact" class="ulink inline-block mt-5 text-[12px] tracking-[.16em] uppercase text-burgundy pb-1">Заказать →</a>
+                </div>
+            </article>
+            <!-- Service 5 -->
+            <article name="service-concepts" class="reveal col-span-12 md:col-span-4 md:mt-28 group">
+                <div class="zoom overflow-hidden h-72 bg-blush relative">
+                    <img src="Зеркальный портрет в пастельных тонах.png" alt="Креативные концепции" class="w-full h-full object-cover">
+                    <span class="absolute top-5 left-5 font-display text-5xl text-ivory/90">05</span>
+                </div>
+                <div class="pt-7">
+                    <h3 class="font-display text-3xl text-plum">Креативные концепции и AI-решения</h3>
+                    <p class="text-ink/70 mt-3 leading-relaxed text-[15px]">Идеи для кампаний и запусков, когда нужен нестандартный ход.</p>
+                    <a href="#contact" class="ulink inline-block mt-5 text-[12px] tracking-[.16em] uppercase text-burgundy pb-1">Заказать →</a>
+                </div>
+            </article>
+        </div>
+    </div>
+</section>
+
+<!-- Portfolio -->
+<section id="portfolio" name="portfolio-section" class="relative bg-blush/60 py-24 lg:py-36 overflow-hidden">
+    <svg class="absolute top-16 right-10 w-10 h-10 text-gold/70 twinkle" aria-hidden="true"><use href="#star"/></svg>
+    <div class="max-w-7xl mx-auto px-5 lg:px-10">
+        <div class="reveal flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8 mb-12">
+            <div>
+                <p class="text-[11px] tracking-[.36em] uppercase text-burgundy mb-6 flex items-center gap-3"><span class="w-10 h-px bg-gold"></span>Портфолио</p>
+                <h2 class="font-display text-5xl md:text-8xl text-plum leading-[.95]">Избранные <em class="text-burgundy">работы</em></h2>
+            </div>
+            <p class="max-w-sm text-ink/70 leading-relaxed">Нажмите на проект, чтобы открыть презентацию: задачу, процесс и результат.</p>
+        </div>
+
+        <div name="portfolio-filters" id="filters" class="reveal flex flex-wrap gap-x-8 gap-y-3 text-[12px] tracking-[.16em] uppercase border-b border-plum/15 pb-4 mb-14">
+            <button class="tab active" data-filter="all">Все</button>
+            <button class="tab" data-filter="Marketplace design">Marketplace design</button>
+            <button class="tab" data-filter="AI photography">AI photography</button>
+            <button class="tab" data-filter="Advertising creatives">Advertising creatives</button>
+            <button class="tab" data-filter="Branding">Branding</button>
+            <button class="tab" data-filter="Creative experiments">Creative experiments</button>
+        </div>
+
+        <div id="portfolio-grid" name="portfolio-grid" class="grid grid-cols-12 gap-x-6 gap-y-14"></div>
+
+        <p class="mt-16 text-center text-[13px] text-ink/55">Хотите увидеть больше? <a href="#contact" class="ulink text-burgundy">Запросить полное портфолио</a></p>
+    </div>
+</section>
+
+<!-- About -->
+<section id="about" name="about-section" class="relative bg-ivory py-24 lg:py-36 overflow-hidden">
+    <div class="max-w-7xl mx-auto px-5 lg:px-10 grid lg:grid-cols-12 gap-14 lg:gap-20 items-center">
+        <div name="about-portrait" class="lg:col-span-5 reveal relative">
+            <!-- Replace with your personal portrait -->
+            <div class="relative aspect-[4/5] overflow-hidden bg-blush">
+                <img src="my-photo.png" alt="Портрет основательницы STYra" class="w-full h-full object-cover">
+            </div>
+            <div class="absolute -top-4 -left-4 w-full h-full border border-gold/60 pointer-events-none"></div>
+            <div class="absolute -bottom-8 -right-4 md:-right-10 bg-burgundy text-ivory px-7 py-6 max-w-[230px]">
+                <svg class="w-5 h-5 text-gold mb-3"><use href="#star"/></svg>
+                <p class="font-display italic text-xl leading-snug">«Красота — это язык, который понимают все»</p>
+            </div>
+        </div>
+
+        <div class="lg:col-span-7 reveal">
+            <p class="text-[11px] tracking-[.36em] uppercase text-burgundy mb-6 flex items-center gap-3"><span class="w-10 h-px bg-gold"></span>Обо мне</p>
+            <h2 class="font-display text-5xl md:text-7xl text-plum leading-[.98]">За каждым красивым образом стоит <em class="text-burgundy">идея</em></h2>
+            <div class="mt-10 grid md:grid-cols-2 gap-8 text-[15px] leading-relaxed text-ink/75">
+                <p>STYra — креативная студия, где технологии встречаются с художественным видением. Я работаю с нейросетями как с кистью: они ускоряют путь, но направление всегда задаёт вкус.</p>
+                <p>За плечами более сотни проектов для брендов красоты, моды и маркетплейсов. Каждый начинается с разговора и заканчивается образом, который хочется рассматривать.</p>
+            </div>
+            <div class="mt-12 grid sm:grid-cols-3 gap-px bg-gold/40 border border-gold/40">
+                <div class="bg-ivory p-6">
+                    <svg class="w-4 h-4 text-gold mb-4"><use href="#star"/></svg>
+                    <h3 class="font-display text-2xl text-plum">Магия</h3>
+                    <p class="text-[13px] text-ink/65 mt-2 leading-relaxed">Превращаю слова и наброски в образы, которых ещё не было.</p>
+                </div>
+                <div class="bg-ivory p-6">
+                    <svg class="w-4 h-4 text-gold mb-4"><use href="#star"/></svg>
+                    <h3 class="font-display text-2xl text-plum">Красота</h3>
+                    <p class="text-[13px] text-ink/65 mt-2 leading-relaxed">Эстетика, в которой есть чувство, свет и вкус.</p>
+                </div>
+                <div class="bg-ivory p-6">
+                    <svg class="w-4 h-4 text-gold mb-4"><use href="#star"/></svg>
+                    <h3 class="font-display text-2xl text-plum">Смысл</h3>
+                    <p class="text-[13px] text-ink/65 mt-2 leading-relaxed">Любой визуал служит задаче бренда, а не просто украшает.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Work Process -->
+<section id="process" name="process-section" class="relative bg-blush/40 py-24 lg:py-32 border-y border-gold/30">
+    <div class="max-w-7xl mx-auto px-5 lg:px-10">
+        <div class="reveal text-left lg:text-center mb-16 lg:mb-24">
+            <p class="text-[11px] tracking-[.36em] uppercase text-burgundy mb-6 lg:justify-center flex items-center gap-3"><span class="w-10 h-px bg-gold"></span>Процесс работы</p>
+            <h2 class="font-display text-5xl md:text-7xl text-plum leading-[.98]">Четыре шага до <em class="text-burgundy">результата</em></h2>
+        </div>
+        <div class="relative grid md:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-14">
+            <div class="hidden lg:block absolute top-6 left-0 right-0 h-px bg-gold/60"></div>
+            <div class="reveal relative">
+                <div class="relative w-12 h-12 bg-blush/0 flex items-center"><span class="bg-[#F1E4E3] pr-4"><svg class="w-12 h-12 text-gold"><use href="#star"/></svg></span></div>
+                <p class="font-display text-7xl text-burgundy/25 leading-none mt-4">01</p>
+                <h3 class="font-display text-3xl text-plum mt-2">Знакомство с идеей</h3>
+                <p class="text-[14px] text-ink/70 mt-3 leading-relaxed">Обсуждаем задачу, аудиторию, настроение и референсы. Вы рассказываете, я слушаю.</p>
+            </div>
+            <div class="reveal relative" style="transition-delay:.12s">
+                <div class="relative w-12 h-12 flex items-center"><span class="bg-[#F1E4E3] pr-4"><svg class="w-12 h-12 text-gold"><use href="#star"/></svg></span></div>
+                <p class="font-display text-7xl text-burgundy/25 leading-none mt-4">02</p>
+                <h3 class="font-display text-3xl text-plum mt-2">Разработка концепции</h3>
+                <p class="text-[14px] text-ink/70 mt-3 leading-relaxed">Собираю мудборд, палитру и визуальную логику. Показываю направление до начала производства.</p>
+            </div>
+            <div class="reveal relative" style="transition-delay:.24s">
+                <div class="relative w-12 h-12 flex items-center"><span class="bg-[#F1E4E3] pr-4"><svg class="w-12 h-12 text-gold"><use href="#star"/></svg></span></div>
+                <p class="font-display text-7xl text-burgundy/25 leading-none mt-4">03</p>
+                <h3 class="font-display text-3xl text-plum mt-2">Создание и согласование</h3>
+                <p class="text-[14px] text-ink/70 mt-3 leading-relaxed">Генерирую и дорабатываю визуалы вручную. Два раунда правок включены.</p>
+            </div>
+            <div class="reveal relative" style="transition-delay:.36s">
+                <div class="relative w-12 h-12 flex items-center"><span class="bg-[#F1E4E3] pr-4"><svg class="w-12 h-12 text-gold"><use href="#star"/></svg></span></div>
+                <p class="font-display text-7xl text-burgundy/25 leading-none mt-4">04</p>
+                <h3 class="font-display text-3xl text-plum mt-2">Финальный результат</h3>
+                <p class="text-[14px] text-ink/70 mt-3 leading-relaxed">Передаю файлы в нужных форматах и размерах, готовые к публикации.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Contact -->
+<section id="contact" name="contact-section" class="relative bg-burgundy text-ivory py-24 lg:py-36 overflow-hidden grain">
+    <div class="absolute inset-0 opacity-60" style="background: radial-gradient(ellipse at 85% 10%, rgba(199,122,152,.35), transparent 55%), radial-gradient(ellipse at 0% 100%, rgba(48,32,47,.8), transparent 60%)"></div>
+    <svg class="absolute -right-24 -bottom-24 w-[420px] h-[420px] text-gold/10 spin-slow" aria-hidden="true"><use href="#star"/></svg>
+    <div class="relative max-w-7xl mx-auto px-5 lg:px-10 grid lg:grid-cols-12 gap-14 lg:gap-20">
+        <div class="lg:col-span-5 reveal">
+            <p class="text-[11px] tracking-[.36em] uppercase text-gold mb-6 flex items-center gap-3"><span class="w-10 h-px bg-gold"></span>Заявка на проект</p>
+            <h2 class="font-display text-5xl md:text-7xl leading-[.98]">Давайте создадим что-то <em class="text-blush">особенное</em></h2>
+            <p class="mt-8 text-ivory/75 leading-relaxed max-w-md">Расскажите о задаче в свободной форме. Отвечу в течение дня и предложу первые идеи по направлению.</p>
+            <ul class="mt-12 space-y-5 text-[14px]">
+                <li class="flex items-center gap-4"><svg class="w-3 h-3 text-gold"><use href="#star"/></svg><a href="mailto:hello@styra.studio" class="ulink">hello@styra.studio</a></li>
+                <li class="flex items-center gap-4"><svg class="w-3 h-3 text-gold"><use href="#star"/></svg><a href="tel:+79276419845" class="ulink">+7 (927) 641-98-45</a></li>
+                <li class="flex items-center gap-4"><svg class="w-3 h-3 text-gold"><use href="#star"/></svg><a href="#" class="ulink">Telegram: @styra_studio</a></li>
+            </ul>
+        </div>
+
+        <div class="lg:col-span-7 reveal">
+            <form id="request-form" name="project-request-form" class="bg-plum p-8 md:p-12 border border-gold/30 relative" novalidate>
+                <div class="grid md:grid-cols-2 gap-x-10 gap-y-7">
+                    <div>
+                        <label for="f-name" class="text-[11px] tracking-[.2em] uppercase text-gold">Имя</label>
+                        <input id="f-name" name="name" type="text" class="field" placeholder="Как к вам обращаться" required>
+                    </div>
+                    <div>
+                        <label for="f-contact" class="text-[11px] tracking-[.2em] uppercase text-gold">Контакт для связи</label>
+                        <input id="f-contact" name="contact" type="text" class="field" placeholder="Telegram, телефон или e-mail" required>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="f-type" class="text-[11px] tracking-[.2em] uppercase text-gold">Тип проекта</label>
+                        <select id="f-type" name="type" class="field">
+                            <option value="">Выберите направление</option>
+                            <option>AI-изображения и визуальный контент</option>
+                            <option>Карточки для маркетплейсов</option>
+                            <option>Рекламные креативы</option>
+                            <option>Брендинг и айдентика</option>
+                            <option>Креативная концепция</option>
+                            <option>Другое</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="f-text" class="text-[11px] tracking-[.2em] uppercase text-gold">Описание задачи</label>
+                        <textarea id="f-text" name="message" rows="4" class="field resize-none" placeholder="Что хотите создать, для кого и в какие сроки"></textarea>
+                    </div>
+                </div>
+                <button type="submit" name="submit-request" class="mt-10 w-full md:w-auto bg-ivory text-plum hover:bg-gold hover:text-ink transition-colors text-[12px] tracking-[.18em] uppercase px-12 py-5 font-semibold">Отправить заявку</button>
+                <p id="form-ok" class="hidden mt-6 text-blush font-display italic text-2xl">Спасибо! Заявка получена, я напишу вам в ближайшее время.</p>
+            </form>
+        </div>
+    </div>
+</section>
+
+</main>
+
+<!-- Footer -->
+<footer name="site-footer" class="bg-plum text-ivory pt-20 pb-10">
+    <div class="max-w-7xl mx-auto px-5 lg:px-10 grid md:grid-cols-12 gap-12 pb-16 border-b border-gold/25">
+        <div class="md:col-span-4">
+            <div class="w-28 h-28 overflow-hidden border border-gold/50">
+                <img src="логотип.jpg" alt="Логотип STYra" class="w-full h-full object-cover">
+            </div>
+            <p class="mt-6 text-ivory/60 text-sm leading-relaxed max-w-xs">Креативная AI-студия визуального дизайна. Технологии, воображение и чувство стиля.</p>
+        </div>
+        <nav class="md:col-span-3 md:col-start-6" name="footer-navigation">
+            <h3 class="text-[11px] tracking-[.3em] uppercase text-gold mb-6">Навигация</h3>
+            <ul class="space-y-3 text-sm text-ivory/80">
+                <li><a href="#home" class="ulink">Главная</a></li>
+                <li><a href="#services" class="ulink">Услуги</a></li>
+                <li><a href="#portfolio" class="ulink">Портфолио</a></li>
+                <li><a href="#about" class="ulink">Обо мне</a></li>
+                <li><a href="#contact" class="ulink">Контакты</a></li>
+            </ul>
+        </nav>
+        <div class="md:col-span-2" name="footer-contacts">
+            <h3 class="text-[11px] tracking-[.3em] uppercase text-gold mb-6">Контакты</h3>
+            <ul class="space-y-3 text-sm text-ivory/80">
+                <li><a href="mailto:hello@styra.studio" class="ulink">hello@styra.studio</a></li>
+                <li><a href="tel:+79276419845" class="ulink">+7 (927) 6419845</a></li>
+                <li class="text-ivory/50">Саранск, по договорённости</li>
+            </ul>
+        </div>
+        <div class="md:col-span-2" name="footer-social">
+            <h3 class="text-[11px] tracking-[.3em] uppercase text-gold mb-6">Соцсети</h3>
+            <ul class="space-y-3 text-sm text-ivory/80">
+                <li><a href="#" class="ulink">Telegram</a></li>
+                <li><a href="#" class="ulink">Instagram</a></li>
+                <li><a href="#" class="ulink">Behance</a></li>
+                <li><a href="#" class="ulink">Pinterest</a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="max-w-7xl mx-auto px-5 lg:px-10 pt-8 flex flex-col md:flex-row justify-between gap-3 text-[12px] text-ivory/45">
+        <p>© 2026 STYra. Все права защищены.</p>
+        <p class="flex items-center gap-2"><svg class="w-3 h-3 text-gold"><use href="#star"/></svg>Сделано с вниманием к эстетике</p>
+    </div>
+</footer>
+
+<!-- Project Modal -->
+<div id="modal" name="project-modal" class="fixed inset-0 z-50 bg-ink/80 backdrop-blur-sm overflow-y-auto" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="min-h-full flex items-start justify-center p-3 md:p-10">
+        <div class="sheet relative bg-ivory w-full max-w-6xl border border-gold/50">
+            <button id="modal-close" class="absolute top-4 right-4 z-10 w-12 h-12 bg-plum text-ivory text-2xl hover:bg-burgundy transition-colors" aria-label="Закрыть">×</button>
+            <div class="grid lg:grid-cols-12">
+                <div class="lg:col-span-7 bg-blush">
+                    <div class="h-[320px] md:h-[620px] overflow-hidden"><img id="m-img" src="" alt="" class="w-full h-full object-cover"></div>
+                    <div class="grid grid-cols-2 gap-px bg-ivory">
+                        <div class="h-40 md:h-56 overflow-hidden"><img id="m-g1" src="" alt="" class="w-full h-full object-cover"></div>
+                        <div class="h-40 md:h-56 overflow-hidden"><img id="m-g2" src="" alt="" class="w-full h-full object-cover"></div>
+                    </div>
+                </div>
+                <div class="lg:col-span-5 p-7 md:p-12 flex flex-col">
+                    <p id="m-cat" class="text-[11px] tracking-[.3em] uppercase text-burgundy flex items-center gap-3"><svg class="w-3 h-3 text-gold"><use href="#star"/></svg><span></span></p>
+                    <h3 id="m-title" class="font-display text-4xl md:text-5xl text-plum mt-5 leading-tight"></h3>
+                    <p id="m-desc" class="mt-5 text-ink/75 leading-relaxed"></p>
+                    <dl class="mt-8 border-t border-gold/50 text-sm">
+                        <div class="flex justify-between gap-4 py-3 border-b border-plum/10"><dt class="text-ink/50">Год</dt><dd id="m-year"></dd></div>
+                        <div class="flex justify-between gap-4 py-3 border-b border-plum/10"><dt class="text-ink/50">Формат</dt><dd id="m-format" class="text-right"></dd></div>
+                        <div class="flex justify-between gap-4 py-3 border-b border-plum/10"><dt class="text-ink/50">Инструменты</dt><dd id="m-tools" class="text-right"></dd></div>
+                    </dl>
+                    <h4 class="font-display text-2xl text-plum mt-8">Задача</h4>
+                    <p id="m-task" class="text-sm text-ink/70 leading-relaxed mt-2"></p>
+                    <h4 class="font-display text-2xl text-plum mt-6">Результат</h4>
+                    <p id="m-result" class="text-sm text-ink/70 leading-relaxed mt-2"></p>
+                    <a href="#contact" id="m-cta" class="mt-10 inline-block text-center bg-burgundy hover:bg-plum transition-colors text-ivory text-[12px] tracking-[.16em] uppercase px-8 py-5">Обсудить похожий проект</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+/* ============================================================
+   PORTFOLIO DATA — EDIT HERE
+   Replace the image URLs (img, gallery) with your own work.
+   Add or remove objects to change the grid.
+   ============================================================ */
+const PROJECTS = [
+    {
+        category: 'Marketplace design',
+        title: 'Линия ухода «Stura»',
+        desc: 'Серия карточек и инфографика для бренда натуральной косметики.',
+        img: '1.png',
+        gallery: [
+            'космет.jpeg',
+            'крем.jpeg'
+        ],
+        year: '2026', format: '12 карточек, 3:4', tools: 'Midjourney, Photoshop, Figma',
+        task: 'Выделить новый бренд среди плотной выдачи и показать состав без визуального шума.',
+        result: 'CTR карточек вырос на 38%, бренд получил узнаваемую визуальную систему.'
+    },
+    {
+        category: 'AI photography',
+        title: 'Шёлк и свет',
+        desc: 'Редакционная серия портретов в бордовых оттенках.',
+        img: './загруженное.jpg',
+        gallery: [
+            'ткань.jpg',
+            'фото боком.jpg'
+        ],
+        year: '2026', format: 'Серия из 8 изображений', tools: 'Midjourney, Lightroom',
+        task: 'Создать лукбук без съёмки, сохранив ощущение живой фотографии.',
+        result: 'Серия использована в соцсетях и на сайте бутика как основной визуал сезона.'
+    },
+    {
+        category: 'Advertising creatives',
+        title: 'Аромат «STYra»',
+        desc: 'Рекламная кампания для селективного парфюма.',
+        img: './Роскошный флакон STYra в янтарном свете.png',
+        gallery: [
+            'духи роз.jpeg',
+            'цветы.jpg'
+        ],
+        year: '2026', format: 'Баннеры, сторис, ключевой визуал', tools: 'Midjourney, Photoshop',
+        task: 'Передать чувственность аромата без прямых визуальных клише.',
+        result: 'Единый ключевой образ адаптирован под 14 рекламных форматов.'
+    },
+    {
+        category: 'Branding',
+        title: 'Бутик «STUra»',
+        desc: 'Айдентика для камерного магазина аксессуаров.',
+        img: 'Роскошная упаковка STYra в кремовых тонах.png',
+        gallery: [
+            'стура визитки.png',
+            'пакет.png'
+        ],
+        year: '2026', format: 'Логотип, палитра, упаковка', tools: 'Illustrator, Midjourney',
+        task: 'Создать узнаваемый, тёплый и дорогой образ для нового бутика.',
+        result: 'Готовый бренд-бук, упаковка и шаблоны для соцсетей.'
+    },
+    {
+        category: 'Creative experiments',
+        title: 'Цветочная архитектура',
+        desc: 'Экспериментальная серия: здания, выросшие из цветов.',
+        img: 'туман.jpg',
+        gallery: [
+            'перья.jpg',
+            'Нежный коллаж из роз в пастельных тонах.png'
+        ],
+        year: '2026', format: 'Авторский проект', tools: 'Midjourney, Runway',
+        task: 'Исследовать, как нейросеть работает с метафорой и материалом.',
+        result: 'Серия опубликована и стала основой для двух заказных проектов.'
+    },
+    {
+        category: 'Marketplace design',
+        title: 'Украшения',
+        desc: 'Инфографика и визуалы для ювелирного бренда.',
+        img: 'украшения.jpg',
+        gallery: [
+            'серьги.jpg',
+            'alice_image (1).png'
+        ],
+        year: '2026', format: '9 слайдов на товар', tools: 'Midjourney, Photoshop',
+        task: 'Показать размер, пробу и фактуру металла в едином премиальном стиле.',
+        result: 'Рост добавлений в избранное на 52% за первый месяц.'
+    },
+    {
+        category: 'AI photography',
+        title: 'Портреты в бордо',
+        desc: 'Серия образов для личного бренда эксперта.',
+        img: 'Кинематографичный портрет в бордовом свете.png',
+        gallery: [
+            'бордо.jpg',
+            'руки1.jpeg'
+        ],
+        year: '2026', format: '20 портретов', tools: 'Midjourney, Lightroom',
+        task: 'Подготовить фотоматериалы для сайта и соцсетей без фотосессии.',
+        result: 'Единый образ в 4 сценариях: сайт, рассылка, соцсети, презентации.'
+    },
+    {
+        category: 'Advertising creatives',
+        title: 'Зимняя коллекция',
+        desc: 'Промо-визуалы для сезона нового бренда одежды.',
+        img: 'Гламурный зимний образ в горах.png',
+        gallery: [
+            'розовая.jpg',
+            '459af3fe-7a96-4d41-bceb-d86b371d3558.jpg'
+        ],
+        year: '2026', format: 'Баннеры, лендинг, соцсети', tools: 'Midjourney, Photoshop, Figma',
+        task: 'Запустить коллекцию в короткие сроки с ограниченным бюджетом.',
+        result: 'Кампания собрана за 6 дней, 30+ креативов в одной стилистике.'
+    }
+];
+
+/* Layout pattern: column span + image height per visible card */
+const PATTERN = [
+    { span: 'md:col-span-7', h: 'md:h-[520px]' },
+    { span: 'md:col-span-5', h: 'md:h-[520px]' },
+    { span: 'md:col-span-4', h: 'md:h-[420px]' },
+    { span: 'md:col-span-4', h: 'md:h-[420px]' },
+    { span: 'md:col-span-4', h: 'md:h-[420px]' },
+    { span: 'md:col-span-6', h: 'md:h-[460px]' },
+    { span: 'md:col-span-6', h: 'md:h-[460px]' }
+];
+
+const grid = document.getElementById('portfolio-grid');
+
+function renderGrid(filter) {
+    grid.innerHTML = '';
+    const items = PROJECTS.map((p, i) => ({ ...p, idx: i })).filter(p => filter === 'all' || p.category === filter);
+    items.forEach((p, n) => {
+        const pat = PATTERN[n % PATTERN.length];
+        const el = document.createElement('article');
+        el.className = 'card-in col-span-12 ' + pat.span + ' group cursor-pointer';
+        el.style.animationDelay = (n * 0.08) + 's';
+        el.setAttribute('name', 'project-card');
+        el.innerHTML =
+            '<div class="zoom relative overflow-hidden bg-blush h-[380px] ' + pat.h + '">' +
+                '<img src="' + p.img + '" alt="' + p.title + '" class="w-full h-full object-cover">' +
+                '<div class="absolute inset-0 bg-gradient-to-t from-plum/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>' +
+                '<span class="absolute bottom-5 left-5 text-ivory text-[11px] tracking-[.2em] uppercase opacity-0 translate-y-3 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500">Открыть проект →</span>' +
+                '<span class="absolute top-0 left-0 bg-ivory text-burgundy text-[10px] tracking-[.2em] uppercase px-4 py-2">' + p.category + '</span>' +
+            '</div>' +
+            '<div class="pt-5 flex items-start justify-between gap-6">' +
+                '<div><h3 class="font-display text-3xl text-plum group-hover:text-burgundy transition-colors">' + p.title + '</h3>' +
+                '<p class="text-[14px] text-ink/65 mt-1 max-w-md">' + p.desc + '</p></div>' +
+                '<span class="font-display text-2xl text-gold shrink-0">' + String(p.idx + 1).padStart(2, '0') + '</span>' +
+            '</div>';
+        el.addEventListener('click', () => openModal(p));
+        grid.appendChild(el);
+    });
+}
+
+document.querySelectorAll('#filters .tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('#filters .tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderGrid(btn.dataset.filter);
+    });
+});
+renderGrid('all');
+
+/* Modal */
+const modal = document.getElementById('modal');
+function openModal(p) {
+    const set = (id, v) => document.getElementById(id).textContent = v;
+    const img = document.getElementById('m-img'); img.src = p.img; img.alt = p.title;
+    document.getElementById('m-g1').src = p.gallery[0];
+    document.getElementById('m-g2').src = p.gallery[1];
+    document.querySelector('#m-cat span').textContent = p.category;
+    set('m-title', p.title); set('m-desc', p.desc); set('m-year', p.year);
+    set('m-format', p.format); set('m-tools', p.tools); set('m-task', p.task); set('m-result', p.result);
+    modal.classList.add('open'); modal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+}
+function closeModal() {
+    modal.classList.remove('open'); modal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+}
+document.getElementById('modal-close').addEventListener('click', closeModal);
+document.getElementById('m-cta').addEventListener('click', closeModal);
+modal.addEventListener('click', e => { if (e.target === modal || e.target.classList.contains('min-h-full')) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+/* Mobile menu */
+const burger = document.getElementById('burger');
+const mm = document.getElementById('mobile-menu');
+burger.addEventListener('click', () => mm.classList.toggle('hidden'));
+document.querySelectorAll('.mm').forEach(a => a.addEventListener('click', () => mm.classList.add('hidden')));
+
+/* Scroll reveal */
+const io = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+}, { threshold: 0.12 });
+document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+/* Form */
+document.getElementById('request-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const f = e.target;
+    if (!f.name.value.trim() || !f.contact.value.trim()) {
+        (f.name.value.trim() ? f.contact : f.name).focus();
+        return;
+    }
+    document.getElementById('form-ok').classList.remove('hidden');
+    f.reset();
+});
+</script>
+</body>
+</html>
